@@ -1,146 +1,128 @@
 # Hardware
 
-Two audiences:
+Two audiences: **users** (events and practice) first, then **developers**. In each section: must-have vs nice-to-have.
 
-1. **User** — running an event or practice (read this section first)  
-2. **Developer** — building or testing the software  
-
-In each section: **Must have** vs **Nice to have**.
-
-You do **not** need a phone bought only for this project. A normal personal phone or a club spare is enough if it meets the floor under “Pilot phone.”
+A personal or club phone is enough if it meets the floor below—you don’t need a phone bought only for race day.
 
 ---
 
-## Part A — Users
+## A. Users
 
-### A1. Must have — flying
+### Must-have — flight
 
-| What | Notes | If you don’t have one |
-|------|--------|------------------------|
-| DJI (or MSDK-supported) aircraft | Target class: Mini 4 Pro. **Check MSDK support** before you buy | ~$800–1100 |
-| Controller that works with a phone app | Prefer RC **without** its own screen so GateRace can own the display | Often in the combo |
-| **USB cable RC → phone** | The short official (or compatible) Lightning / USB‑C / Micro‑USB cable — this is how the phone gets live view on phone-centric DJs | Usually **in the box** with the RC |
-| Android phone with working **USB OTG** for that RC | **Yours or the club’s** — see specs below; phone must accept the RC over USB (prompts vary by brand) | $0 if you already own one |
-| Batteries for the day | At least one spare is wise | $0–300 |
-| Legal to fly there | Registration, VLOS, insurance as required | varies |
+| Item | Notes | Typical cost if buying |
+|------|--------|-------------------------|
+| MSDK-supported DJI (or equivalent) aircraft | Confirm support on developer.dji.com; Mini 4 Pro class is the v1 target | ~$800–1100 |
+| Phone-centric remote | Prefer no built-in screen so GateRace owns the display | Often in the combo |
+| RC ↔ phone USB cable | Official or compatible Lightning / USB‑C / Micro‑USB short cable | Usually included |
+| Android phone | Personal or shared; needs working USB link to that RC (OTG as required by the handset) | $0 if you already own one |
+| Batteries for the session | Spares recommended | $0–300 |
+| Legal compliance | Registration, VLOS, insurance as required locally | Varies |
 
-### A2. Must have — ground
+### Must-have — ground
 
-| What | Notes | If you don’t have one |
-|------|--------|------------------------|
-| Laptop or small PC | Runs the race box. Weak is fine if you’re not encoding video | Often already owned; used ~$400+ |
-| Way for phone to reach laptop | Same Wi‑Fi: phone hotspot, home Wi‑Fi, or a travel router | $0–150 |
-| This software + Python 3.10+ | From this repo | Free |
+| Item | Notes | Typical cost if buying |
+|------|--------|-------------------------|
+| Laptop or small PC | Runs the race box; modest CPU is fine without video encode | Often owned; used ~$400+ |
+| Network path phone ↔ laptop | Same Wi‑Fi: hotspot, venue Wi‑Fi, or travel router | $0–150 |
+| This repo + Python 3.10+ | Race box software | Free |
 
-With **A1 + A2** you can score heats (telemetry + director UI). No TV, no stream, no extra phones.
+With the above you can score heats. TV, streaming, and spare phones are optional.
 
-### A3. Nice to have — users
+### Nice-to-have — users
 
-| What | Why |
+| Item | Why |
 |------|-----|
-| Travel router | Cleaner than hotspot; private field network |
-| Phone clamp + sun hood | Outdoor flying |
-| Club/spare phone | Backup battery or if someone’s phone is too old for MSDK — **not** “buy flagships for the brand” |
-| Extra batteries / hub | Longer days |
-| TV or big monitor | Show spectator video or leaderboard |
-| `ffmpeg` on the laptop | Required only for spectator HLS / restream |
+| Travel router | Cleaner private LAN than a phone hotspot |
+| Clamp and sun hood | Outdoor readability |
+| Spare / club phone | Backup battery or older-device fallback |
+| Extra batteries and charger hub | Longer events |
+| TV or large monitor | Spectator HLS or leaderboard display |
+| `ffmpeg` on the race box | Spectator packaging and optional restream |
 | Power station | Sites without mains |
-| Cones / flags under virtual gates | Helps humans see the course |
-| Landing pad, LiPo bag, tools | Normal field kit |
+| Cones or flags | Physical hints under virtual gates |
+| Standard field kit | Landing pad, LiPo bag, tools |
 | Second aircraft | Head-to-head without sharing one airframe |
 
-### A4. Skip unless you know you need it
+### Usually skip for v1
 
-- Brand-new **event-only** flagship phone  
-- Capture card + OBS (fallback if phone can’t RTMP yet)  
-- RTK survey gear (large gates reduce the need in v1)  
-- Server in the cloud (only for remote leaderboards later)  
+Dedicated event-only flagship phones, capture-card OBS rigs, RTK survey gear, cloud VPS for leaderboards—unless you already know you need them.
 
-**Rough money:** often under **$2k** if you already own laptop + phone; more if you’re buying the aircraft kit from zero.
+**Budget sketch:** often under ~$2k if laptop and phone are already owned; more if buying the full aircraft kit from scratch.
 
-### User specs (minimum → comfortable)
+### User specs
 
-**Race box laptop**
+**Race box**
 
 | | Minimum | Comfortable |
 |--|---------|-------------|
-| CPU | Dual-core 64-bit | Quad-core modern laptop/NUC |
-| RAM | 4 GB free for OS + race box only | 8–16 GB if spectator encode + browser |
-| Disk | 1 GB free | 10 GB if you keep clips/logs |
+| CPU | Dual-core 64-bit | Modern quad-core |
+| RAM | 4 GB free for OS + race box | 8–16 GB with spectator encode + browser |
+| Disk | ~1 GB free | ~10 GB with logs/clips |
 | Software | Python 3.10+, `aiohttp` | + `ffmpeg` for spectator |
 
-Scoring alone is light (~40 MB RAM for the race box process in lab). **Video encode** is what stresses the laptop.
+Scoring alone is light (tens of MB RAM for the server process in lab). Software video encode is the main laptop load.
 
 **Pilot phone**
 
-| | Minimum (app SIM / bench) | Comfortable (real DJI video later) |
-|--|---------------------------|-------------------------------------|
-| Android | 8+ (`minSdk` 26) | 11+ |
+| | Minimum (SIM / bench) | Comfortable (MSDK live view) |
+|--|----------------------|------------------------------|
+| Android | 8+ (app minSdk 26) | 11+ |
 | RAM | 3 GB | 6–8 GB+ |
-| Device class | Older midrange OK for simulator | Mid/flagship ~2021+ for sustained liveview + overlay |
-| Role | Personal or club phone | Same |
+| Class | Older midrange OK for simulator | Mid/flagship ~2021+ for sustained decode + overlay |
 
-**Spectator display:** any smart TV browser or laptop with VLC on the **same LAN** as the race box.
+**Spectator display:** smart TV browser or laptop with VLC on the same LAN as the race box.
+
+### Smart glasses
+
+Optional experiment, not required. Many USB‑C glasses need DisplayPort Alt Mode; the RC needs a USB data/OTG-style link. See [HOW_IT_WORKS.md](HOW_IT_WORKS.md) for how those roles interact on one port.
 
 ---
 
-## Part B — Developers
+## B. Developers
 
-### B1. Must have
+### Must-have
 
-| What | Notes |
+| Item | Notes |
 |------|--------|
-| Normal dev computer | See table below |
-| JDK 17, Android SDK, Python 3.10+ | Build app + run race box |
-| Git + this repo | |
-| DJI developer account | Only when you plug in MSDK |
+| Dev machine | See table below |
+| JDK 17, Android SDK, Python 3.10+ | App builds + race box |
+| Git and this repository | |
+| DJI developer account | When integrating MSDK |
 
-### B2. Nice to have
+### Nice-to-have
 
-| What | Why |
+| Item | Why |
 |------|-----|
-| KVM / Hypervisor | Emulator usable |
+| Hardware virtualization (KVM, etc.) | Usable Android emulator |
 | 16–32 GB RAM | Emulator + IDE |
-| Physical Android phone | Test without multi‑GB emulator |
-| Real supported aircraft | Flight tests |
+| Physical Android phone | Device tests without emulator RAM cost |
+| Supported aircraft | Flight tests |
 | Android Studio | Optional; `./gradlew` is enough |
 
-### B3. Developer machine sizes
+### Developer machine sizes
 
 | | Minimum | Comfortable |
 |--|---------|-------------|
-| RAM | 8 GB (no emulator) | 16–32 GB with emulator |
-| Disk | ~10 GB | 30 GB+ SDK + images |
+| RAM | 8 GB without emulator | 16–32 GB with emulator |
+| Disk | ~10 GB | 30 GB+ SDK and system images |
 | CPU | 4 cores | 8+ |
-| Emulator | Optional | Expect **several GB RAM** and high CPU — lab sample ~3.5 GB for a 3 GB AVD |
 
-You can develop scoring and API with **only** Python + `sim/dji_telemetry_mock.py` — no Android install.
+You can develop scoring and APIs with Python and `sim/dji_telemetry_mock.py` only.
 
----
+### Where CPU and RAM go
 
-## What uses the CPU (so you know where pain is)
-
-| Software | Load | Comment |
-|----------|------|---------|
-| Race scoring / API | Very low | Not your bottleneck |
-| Spectator `ffmpeg` | Medium–high | Main ground cost if streaming |
-| Telemetry mock | Low | |
-| Android SIM app | Low–medium | |
-| Future MSDK liveview | High on **phone** GPU | Thermals matter |
-| Android emulator | Very high on **dev PC** | Event site doesn’t need this |
-
-Lab integrated checks (scoring, mock heats, spectator demo HLS, emulator heat after app fix) are summarized in git history / prior runs; treat phone MSDK load as **unmeasured on real aircraft** until you fly.
+| Component | Load |
+|-----------|------|
+| Race scoring / API | Very low |
+| Spectator `ffmpeg` | Medium–high on the race box |
+| Telemetry mock | Low |
+| Android SIM app | Low–medium on device |
+| MSDK live view (field) | High on phone GPU / thermals |
+| Android emulator | Very high on the dev PC |
 
 ---
-
-## Smart glasses (optional experiment)
-
-See the plain-language section in [HOW_IT_WORKS.md](HOW_IT_WORKS.md).
-
-In one line: many USB‑C glasses want **DisplayPort from the phone**; the DJI RC wants **USB data/OTG to the phone**. Same port, different jobs — plan for that. Not a v1 must-have.
 
 ## Related
 
-- Concepts: [HOW_IT_WORKS.md](HOW_IT_WORKS.md)  
-- Run software: [START.md](START.md)  
-- Spectator wiring: [SPECTATOR.md](SPECTATOR.md)  
+[HOW_IT_WORKS.md](HOW_IT_WORKS.md) · [START.md](START.md) · [SPECTATOR.md](SPECTATOR.md)

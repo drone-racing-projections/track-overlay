@@ -1,32 +1,32 @@
-# Spectator video (TV / internet)
+# Spectator video
 
-This is **not** for flying. Pilots use the phone. Spectators can watch something delayed.
+Delayed video for audiences (TV or internet), managed by the race box. Not for piloting.
 
-## Idea
+## Pipeline
 
-1. Something publishes video **to** the race box (phone RTMP later, or OBS, or a test pattern).  
-2. Race box runs `ffmpeg` and writes **HLS** for the LAN.  
-3. Optionally it also **pushes** out to Twitch/YouTube/etc.
+1. A source publishes video to the race box (phone RTMP later, OBS, or a test pattern).  
+2. The race box runs `ffmpeg` and serves **HLS** on the LAN.  
+3. Optionally it restreams to an external RTMP URL (Twitch, YouTube, custom).
 
-Needs **`ffmpeg`** installed on the race box machine.
+Requires **`ffmpeg`** on the race box host.
 
 ## Modes
 
-| Mode | Meaning |
-|------|---------|
-| `ingest` | Wait for RTMP push at `rtmp://<race-box>:1935/live/pilot` |
-| `pull` | Race box pulls a URL you give it |
-| `demo` | Colour bars / test pattern (no aircraft) |
+| Mode | Source |
+|------|--------|
+| `ingest` | RTMP push to `rtmp://<race-box>:1935/live/pilot` |
+| `pull` | Race box pulls `pull_url` |
+| `demo` | Built-in test pattern |
 
-Port **1935** and stream key `pilot` are defaults (`GATERACE_RTMP_PORT`, `GATERACE_STREAM_KEY`).
+Defaults: port **1935**, stream key **`pilot`** (`GATERACE_RTMP_PORT`, `GATERACE_STREAM_KEY`).
 
-## Operator flow
+## Operator steps
 
-1. Start race box.  
-2. Director UI → Spectator, or API below.  
-3. Start **demo** first to verify the TV.  
-4. On LAN open: `http://<race-box-ip>:8088/stream/index.m3u8` (VLC or TV browser).  
-5. Optional: set egress RTMP URL for the internet.
+1. Start the race box.  
+2. Use the director UI Spectator panel, or the API.  
+3. Start with **demo** to verify the TV path.  
+4. On the LAN: `http://<race-box-ip>:8088/stream/index.m3u8` (VLC, TV browser, or director player).  
+5. Optional: set an egress RTMP URL for the internet.
 
 ```bash
 curl -X POST http://127.0.0.1:8088/spectator/start \
@@ -37,10 +37,10 @@ curl -X POST http://127.0.0.1:8088/spectator/stop
 curl http://127.0.0.1:8088/spectator
 ```
 
-## Expect delay
+## Latency
 
-LAN HLS: often a few seconds. Internet: often more. **Never** pilot off this.
+LAN HLS is often a few seconds; internet egress often more. Keep pilots on the phone path.
 
 ## Security
 
-Field LAN only for v1 ingest. Don’t expose RTMP to the open internet without a real media stack and auth.
+Treat RTMP ingest as a trusted field LAN service in v1. Don’t expose it to the public internet without a proper media stack and auth.
