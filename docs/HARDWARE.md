@@ -19,7 +19,8 @@ You do **not** need a phone bought only for this project. A normal personal phon
 |------|--------|------------------------|
 | DJI (or MSDK-supported) aircraft | Target class: Mini 4 Pro. **Check MSDK support** before you buy | ~$800–1100 |
 | Controller that works with a phone app | Prefer RC **without** its own screen so GateRace can own the display | Often in the combo |
-| Android phone | **Yours or the club’s** — see specs below | $0 if you already own one |
+| **USB cable RC → phone** | The short official (or compatible) Lightning / USB‑C / Micro‑USB cable — this is how the phone gets live view on phone-centric DJs | Usually **in the box** with the RC |
+| Android phone with working **USB OTG** for that RC | **Yours or the club’s** — see specs below; phone must accept the RC over USB (prompts vary by brand) | $0 if you already own one |
 | Batteries for the day | At least one spare is wise | $0–300 |
 | Legal to fly there | Registration, VLOS, insurance as required | varies |
 
@@ -131,6 +132,12 @@ You can develop scoring and API with **only** Python + `sim/dji_telemetry_mock.p
 Lab integrated checks (scoring, mock heats, spectator demo HLS, emulator heat after app fix) are summarized in git history / prior runs; treat phone MSDK load as **unmeasured on real aircraft** until you fly.
 
 ---
+
+## Smart glasses (optional experiment)
+
+See the plain-language section in [HOW_IT_WORKS.md](HOW_IT_WORKS.md).
+
+In one line: many USB‑C glasses want **DisplayPort from the phone**; the DJI RC wants **USB data/OTG to the phone**. Same port, different jobs — plan for that. Not a v1 must-have.
 
 ## Related
 

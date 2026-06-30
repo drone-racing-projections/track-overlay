@@ -1,77 +1,59 @@
 # Track Overlay
 
-Virtual racing gates on a **real drone** FPV-style feed. Pilots fly through world-locked rings; a laptop on the field keeps score. Optional delayed video goes to a TV or the internet.
+**Race through virtual gates while flying a real drone.**
 
-**This is GateRace** — the implementation living in this repo.
-
----
-
-## Read these in order
-
-| # | Doc | What it’s for |
-|---|-----|----------------|
-| 1 | **[docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md)** | The whole system in plain language (start here if you’re lost) |
-| 2 | **[docs/START.md](docs/START.md)** | Run it on your machine today |
-| 3 | **[docs/HARDWARE.md](docs/HARDWARE.md)** | What to buy — users first, then developers; must-have vs optional |
-| 4 | **[docs/API.md](docs/API.md)** | Phone ↔ race box protocol (when you’re wiring software) |
-| 5 | **[docs/SPECTATOR.md](docs/SPECTATOR.md)** | TV / internet POV via the race box |
-| — | [docs/RESEARCH.md](docs/RESEARCH.md) | Background options we considered (optional reading) |
-
-Android app notes: [android/README.md](android/README.md)
+You fly a camera drone. The remote talks to the aircraft over radio. You **plug the remote into your phone with USB**, open our app (**GateRace**), and you see live video **with race rings drawn in the world**. A laptop on the field keeps official time. Optional delayed video can go to a TV or online for spectators — not for piloting.
 
 ---
 
-## 30-second picture
+## Start here
 
-```
-Drone ──RF──► Phone (GateRace app)
-                 │ draws AR gates for the PILOT  (must stay fast)
-                 │
-                 ├── light telemetry ──► Race box laptop (official times)
-                 │
-                 └── optional delayed video ──► Race box ──► TV / Twitch / etc.
-```
+1. **[docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md)** — the human story (USB, radio, phone, laptop, smart glasses)  
+2. **[docs/START.md](docs/START.md)** — run the software on a computer today  
+3. **[docs/HARDWARE.md](docs/HARDWARE.md)** — what you need (must-have vs nice; users then developers)  
 
-Rules of thumb:
-
-- **Pilot video stays on the phone.** Never route it through the laptop for flying.
-- **Race box owns timing** and optional spectator video.
-- **Large outdoor gates** so normal GPS is good enough.
+Also: [docs/API.md](docs/API.md) (programmers), [docs/SPECTATOR.md](docs/SPECTATOR.md) (TV/stream), [android/README.md](android/README.md) (app build).
 
 ---
 
-## Repo layout (code)
+## Picture
 
 ```
-track_core/     Shared maths: GPS→local metres, gate hits, race state
-tracks/         Track files (gate positions), e.g. demo_field.json
-race_box/       Ground station: API, director web UI, spectator relay
-android/        GateRace Android app (simulator mode today)
-sim/            Laptop tools: fake DJI telemetry, optional desktop preview
-scripts/        Tests and environment setup
-docs/           Documentation (see table above)
+ Drone  --radio-->  Remote controller  --USB-->  Phone (GateRace: video + gates)
+                                                   |
+                                                   +-- Wi‑Fi telemetry --> Laptop (scores the race)
+                                                   +-- optional delayed video --> TV / internet
 ```
+
+If you only remember one thing: **pilots look at the phone (or a display that mirrors that phone). They do not fly off the laptop or the livestream.**
 
 ---
 
-## Fastest “it works” check
+## Try scoring in two commands (no drone)
 
 ```bash
-# Terminal 1 — ground station
 pip install aiohttp
-PYTHONPATH=. python3 race_box/server.py
-# open http://127.0.0.1:8088/
+PYTHONPATH=. python3 race_box/server.py    # http://127.0.0.1:8088/
 
-# Terminal 2 — fake aircraft telemetry
+# other terminal
 PYTHONPATH=. python3 sim/dji_telemetry_mock.py
 ```
 
-You should see a heat finish on the director page and show up on the leaderboard.
+---
 
-More detail: [docs/START.md](docs/START.md).
+## Code map
+
+| Folder | What it is |
+|--------|------------|
+| `race_box/` | Laptop ground station (times, web UI, optional spectator video) |
+| `android/` | GateRace phone app (simulator mode until DJI SDK is wired) |
+| `track_core/` | Shared “where are the gates / did they pass” logic |
+| `tracks/` | Gate layouts (e.g. demo field) |
+| `sim/` | Fake flights for testing |
+| `docs/` | Documentation |
 
 ---
 
 ## License / safety
 
-See [LICENSE](LICENSE). Experimental. Follow local drone law. AR is not a substitute for looking where you’re going.
+[LICENSE](LICENSE). Experimental. Obey local drone laws. Virtual gates are not a substitute for flying carefully.
