@@ -32,3 +32,7 @@ race_box/logs/
 # Local secrets
 **/google-services.json
 **/dji_api_key*
+
+# Spectator HLS output
+race_box/static/stream/
+

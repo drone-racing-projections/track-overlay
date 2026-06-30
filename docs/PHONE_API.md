@@ -1,70 +1,116 @@
-# GateRace phone ↔ race box API
+# Phone ↔ race box API
 
-Base URL (field Wi‑Fi): `http://<race-box-ip>:8088`  
-Emulator → host: `http://10.0.2.2:8088`  
+Base URL on the field LAN: `http://<race-box-ip>:8088`  
+
+Android emulator → host loopback: `http://10.0.2.2:8088`  
+
 WebSocket: `ws://<host>:8088/ws`
 
-Pilot **video never uses this link** — only race control + telemetry.
+This link carries **race control and telemetry only**. Pilot video for flying does not use it. Spectator video uses RTMP/HLS as described in [SPECTATOR.md](SPECTATOR.md).
 
-Optional auth: set env `GATERACE_TOKEN` on the race box; send `Authorization: Bearer <token>` or `X-GateRace-Token`.
+Optional API auth: set `GATERACE_TOKEN` on the race box; send `Authorization: Bearer <token>` or header `X-GateRace-Token`.
 
-## Clock policy (required)
+---
 
-- Field **`t` is phone-monotonic seconds within a heat** (typically starts near 0 when the phone begins the heat / after Arm resets sim).
-- **Do not** mix unix wall time or browser `performance.now()` into `t` or soft start.
-- Soft start body: `{ "t": <phone_monotonic> }` only.
-- Race box rejects backwards `t` (beyond 50 ms jitter).
+## Clock policy
+
+| Rule | Detail |
+|------|--------|
+| Heat time domain | Field `t` is **phone-monotonic seconds within a heat** |
+| Soft start | Body must include `{ "t": <phone_monotonic> }` only |
+| Forbidden for scoring | Unix wall clock, browser `performance.now()` |
+| Backwards `t` | Rejected (beyond ~50 ms jitter) |
+
+The race box may return `clock: "phone_monotonic"` and `last_pose_t` so directors can display live elapsed time without inventing a second clock.
+
+---
 
 ## Heat ownership
 
-- `POST /session/arm` with `{ "track", "pilot_id" }` creates a heat (`heat_id`).
-- First telemetry locks `pilot_id` if not set at arm; other pilots get **409**.
-- After **finished**, telemetry gets **409** until re-arm (no silent ignore).
+1. `POST /session/arm` creates a heat (`heat_id`) and optional `pilot_id`.  
+2. Telemetry from another `pilot_id` receives **409**.  
+3. After the heat **finishes**, telemetry receives **409** until the next arm.
 
-## Track
+Only one active telemetry source per heat.
 
-### `GET /tracks` → `{ "tracks": ["demo_field", ...] }`
-### `GET /tracks/{name}` — track JSON (origin + gates)
+---
 
-## Session
+## Endpoints
 
-### `POST /session/arm`
+### Health
+
+`GET /health` → `{ "ok": true, "clock_policy": "phone_monotonic", "auth_required": false, "t_server_wall": … }`
+
+### Tracks
+
+- `GET /tracks` → `{ "tracks": ["demo_field", …] }`  
+- `GET /tracks/{name}` → track JSON (origin + gates)
+
+### Session
+
+**Arm**
+
+`POST /session/arm`
+
 ```json
 { "track": "demo_field", "pilot_id": "pilot1" }
 ```
 
-### `POST /session/start` (soft start)
+**Soft start** (optional; usually the first gate starts the clock)
+
+`POST /session/start`
+
 ```json
 { "t": 0.0 }
 ```
-Phone-monotonic only. Invalid without `t`.
 
-### `GET /session`
-Includes `pilot_id`, `heat_id`, `last_pose_t`, `clock: "phone_monotonic"`, live `elapsed_s` while running.
+**Read session**
 
-## Telemetry
+`GET /session` — includes `state`, `gates_hit`, `next_gate_id`, `elapsed_s`, `t_start`, `t_finish`, `splits`, `pilot_id`, `heat_id`, `last_pose_t`, `finished`.
 
-### `POST /telemetry`
-Required: `t`, `e`, `n`, `u`. Optional attitude/gimbal/`pilot_id`.
-Invalid body → **400** with `{ "error": "..." }`. Ownership/finished → **409**.
+### Telemetry
 
-Send **10–20 Hz** while armed/running. Stop when finished (client should re-arm).
+`POST /telemetry`
 
-## Leaderboard / history
+Required: `t`, `e`, `n`, `u` (track ENU metres). Optional: attitude, gimbal, `pilot_id`.
 
-- `GET /leaderboard?limit=50&track=demo_field` — best times from `race_box/logs/heats.jsonl`
-- `GET /heats` — recent heat records
+| Outcome | HTTP |
+|---------|------|
+| OK | 200 + session fields + `new_passes` |
+| Bad / incomplete body | **400** `{ "error": "…" }` |
+| Wrong pilot / finished / not armed | **409** |
+
+Target rate: **10–20 Hz** while armed or running. Stop sending after finish until re-arm.
+
+Phone converts WGS84 → ENU using the track origin before posting.
+
+### Leaderboard and history
+
+- `GET /leaderboard?limit=50&track=demo_field` — best times from `race_box/logs/heats.jsonl`  
+- `GET /heats` — recent heat records  
+
+### Spectator control
+
+See [SPECTATOR.md](SPECTATOR.md): `/spectator`, `/spectator/start`, `/spectator/stop`, `/stream/...`.
+
+---
 
 ## WebSocket `/ws`
 
-Messages: `session`, `pass`, `finish`, `ping`, `error`.
+**Server → client:** `session`, `pass`, `finish`, `ping`, `error`  
 
-Client may send: `hello`, `telemetry` `{ "type":"telemetry", "payload": {…} }`, `ping`.
+**Client → server:**
 
-## Health
+```json
+{ "type": "hello", "pilot_id": "pilot1" }
+{ "type": "telemetry", "payload": { /* same as POST /telemetry */ } }
+{ "type": "ping" }
+```
 
-`GET /health` → `{ "ok": true, "clock_policy": "phone_monotonic", "auth_required": false, "t_server_wall": … }`
+Prefer WebSocket telemetry once connected; HTTP remains supported.
+
+---
 
 ## Director UI
 
-`http://<race-box-ip>:8088/`
+Open `http://<race-box-ip>:8088/` for arming, live session state, leaderboard, and spectator relay controls.

@@ -20,6 +20,9 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import spectator as _spectator_mod
+spectator_relay = _spectator_mod.relay
 
 from track_core.models import Track, Pose, RaceConfig
 from track_core.race import RaceEngine, RaceState
@@ -33,6 +36,7 @@ except ImportError:
 
 TRACKS = ROOT / "tracks"
 STATIC = Path(__file__).resolve().parent / "static"
+
 LOG_DIR = ROOT / "race_box" / "logs"
 HEAT_LOG = LOG_DIR / "heats.jsonl"
 
@@ -463,6 +467,59 @@ async def static_file(request: web.Request) -> web.Response:
     return web.FileResponse(path)
 
 
+
+
+async def get_spectator(request: web.Request) -> web.Response:
+    return web.json_response(spectator_relay.status())
+
+
+async def post_spectator_start(request: web.Request) -> web.Response:
+    denied = check_auth(request)
+    if denied:
+        return denied
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    if not isinstance(data, dict):
+        data = {}
+    st = spectator_relay.start(data)
+    code = 200 if st.get("running") else (400 if st.get("error") else 503)
+    return web.json_response(st, status=code)
+
+
+async def post_spectator_stop(request: web.Request) -> web.Response:
+    denied = check_auth(request)
+    if denied:
+        return denied
+    spectator_relay.stop()
+    return web.json_response(spectator_relay.status())
+
+
+async def post_spectator_config(request: web.Request) -> web.Response:
+    denied = check_auth(request)
+    if denied:
+        return denied
+    try:
+        data = await request.json()
+    except Exception:
+        return web.json_response({"error": "invalid JSON"}, status=400)
+    spectator_relay.configure(data)
+    return web.json_response(spectator_relay.status())
+
+
+async def stream_file(request: web.Request) -> web.Response:
+    """Serve HLS playlist and segments from static/stream/."""
+    name = request.match_info["name"]
+    if "/" in name or ".." in name:
+        raise web.HTTPBadRequest()
+    path = STATIC / "stream" / name
+    if not path.exists() or not path.is_file():
+        raise web.HTTPNotFound()
+    ctype = "application/vnd.apple.mpegurl" if name.endswith(".m3u8") else "video/mp2t"
+    return web.FileResponse(path, headers={"Cache-Control": "no-cache", "Content-Type": ctype, "Access-Control-Allow-Origin": "*"})
+
+
 def create_app() -> web.Application:
     app = web.Application()
     app.router.add_get("/health", get_health)
@@ -474,6 +531,11 @@ def create_app() -> web.Application:
     app.router.add_get("/tracks/{name}", get_track)
     app.router.add_get("/leaderboard", get_leaderboard)
     app.router.add_get("/heats", get_heats)
+    app.router.add_get("/spectator", get_spectator)
+    app.router.add_post("/spectator/start", post_spectator_start)
+    app.router.add_post("/spectator/stop", post_spectator_stop)
+    app.router.add_post("/spectator/config", post_spectator_config)
+    app.router.add_get("/stream/{name}", stream_file)
     app.router.add_get("/ws", ws_handler)
     app.router.add_get("/", index)
     app.router.add_get("/static/{name}", static_file)

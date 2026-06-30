@@ -1,119 +1,138 @@
-# GateRace — AR drone track overlay (latency-first)
+# Track Overlay (GateRace)
 
-World-locked **racing gates/rings** on a **DJI** live view. Pilots race checkpoints; **fastest clean run wins**.
+**Virtual racing gates on a real drone feed** — world-locked rings on the pilot’s live view, authoritative timing on a field laptop, optional **spectator POV** to a TV or the internet.
 
-## Priority
+Part of [Drone Racing Projections](https://github.com/drone-racing-projections). This repository implements the **latency-first** stack: commercial DJI airframe, custom Android app for the pilot display, ground **race box** for scoring and spectator distribution.
 
-1. **Low latency visuals** (fun or nothing)  
-2. **Come-and-fly** ground ops (complex setup OK if pilots just fly)  
-3. **Commercial DJI** airframe (Mini 4 Pro class + MSDK app on phone)  
-4. Large outdoor gates first (GNSS-tolerant)
+| Priority | Principle |
+|----------|-----------|
+| 1 | Pilot visuals must feel instant (fun or nothing) |
+| 2 | Come-and-fly ops — complex setup is OK if pilots only fly |
+| 3 | Stock / prosumer DJI where possible (Mini 4 Pro class + MSDK) |
+| 4 | Large outdoor gates that tolerate consumer GNSS |
 
-See [docs/DECISION_V1.md](docs/DECISION_V1.md) and [docs/BOM_V1.md](docs/BOM_V1.md).
+---
 
-## Architecture (v1)
+## How it fits together
 
-- **Phone (GateRace Android / MSDK):** decode DJI liveview → draw gates → show pilot. **Never** send pilot video through the laptop.
-- **Race box (this repo, laptop on field Wi‑Fi):** authoritative pass detection & timing from telemetry JSON.
-- **Spectator video (optional):** delayed RTMP from phone — not for piloting.
+```
+ Mini 4 Pro ──OcuSync──► RC + Android phone (GateRace app)
+                              │  liveview + AR gates (pilot path, stays on phone)
+                              │
+                              ├── Wi‑Fi telemetry (10–20 Hz) ──► Race box (timing, leaderboard)
+                              │
+                              └── optional RTMP (delayed) ──► Race box spectator relay
+                                                              ├── HLS → TV / LAN browsers
+                                                              └── optional RTMP egress → internet
+```
 
-## Repo status
+**Pilot path:** decode DJI liveview on the phone → project gates → show the pilot. Video for flying **never** routes through the laptop.
 
-| Piece | Status |
-|-------|--------|
-| Track format + ENU geo | Done (`track_core`, `tracks/demo_field.json`) |
-| Pass detection + race engine | Done |
-| Ground race box HTTP API | Done (`race_box/server.py`) |
-| Desktop overlay sim | Done (`sim/desktop_sim.py`) |
-| Android MSDK GateRace app | **Next** (needs DJI key + device) |
+**Race box:** authoritative pass detection, heat control, director UI, heat logs, and **spectator** ingest/restream.
 
-## Quick start (software now)
+**Spectator path:** secondary, delayed on purpose. Safe for a sideline TV or Twitch/YouTube; unsuitable for piloting.
+
+---
+
+## Repository map
+
+| Path | Role |
+|------|------|
+| `track_core/` | Track geometry (ENU), projection math, pass detection, race engine |
+| `tracks/` | Track JSON (e.g. `demo_field.json`) |
+| `race_box/` | Ground station HTTP/WebSocket API, director UI, spectator relay |
+| `android/` | GateRace app (SIM overlay today; MSDK for field) |
+| `sim/` | Desktop visual sim + host DJI-style telemetry mock |
+| `docs/` | Decisions, API, BOM, spectator guide |
+| `scripts/` | Tests and environment setup |
+
+---
+
+## Quick start
+
+### Race box (ground station)
 
 ```bash
-cd /work/drone-track-overlay
+cd track-overlay
+pip install aiohttp          # if needed
+# optional spectator relay:
+# sudo apt install ffmpeg
+
+PYTHONPATH=. python3 race_box/server.py
+```
+
+- Director UI: <http://127.0.0.1:8088/>
+- API overview: [docs/PHONE_API.md](docs/PHONE_API.md)
+- Spectator: [docs/SPECTATOR.md](docs/SPECTATOR.md)
+
+Arm a heat, watch the leaderboard, and (with `ffmpeg` installed) start a **demo** spectator stream from the director panel to verify TV/LAN playback.
+
+### Unit / API checks
+
+```bash
 PYTHONPATH=. python3 scripts/test_pass_detect.py
-
-# Race box
-PYTHONPATH=. python3 race_box/server.py
-# curl -X POST http://127.0.0.1:8088/session/arm -d '{"track":"demo_field"}'
-
-# Visual sim (needs display — see /work/DISPLAY.md)
-PYTHONPATH=. python3 sim/desktop_sim.py
+PYTHONPATH=. python3 scripts/test_api_and_mock.py   # race box must be running
 ```
 
-### Sim controls
-
-W/S speed · A/D yaw · R/F up/down · Q/E camera pitch · ESC quit
-
-## Hardware to buy (summary)
-
-See **docs/BOM_V1.md**. Minimum roll-out: Mini 4 Pro + phone RC path + strong Android phone + field laptop + travel router ≈ **$2–3.5k**.
-
-Register at [developer.dji.com](https://developer.dji.com), create MSDK app key for your package name.
-
-## Next engineering steps
-
-1. Android app skeleton from [MSDK V5 sample](https://github.com/dji-sdk/Mobile-SDK-Android-V5): video surface + pose → port `project.py` math to Kotlin/OpenGL.  
-2. Phone posts `/telemetry` at 10–20 Hz to race box; local render uses latest pose.  
-3. Field calibration: measure phone overlay latency (clap test / LED).  
-4. Place real-world cones under virtual gates for v1 fun.
-
-## Hardening (lab)
-
-- Telemetry validation (400), heat ownership + finished lock (409)
-- Phone-monotonic clock only; soft start requires `t`
-- Heat log: `race_box/logs/heats.jsonl` · `GET /leaderboard` · director UI
-- Optional `GATERACE_TOKEN` auth
-- Android: editable race-box URL + pilot, reconnect, error HUD
-- Tests: `scripts/test_pass_detect.py`, `scripts/test_api_and_mock.py`
-- Env bootstrap: `scripts/setup_android_env.sh`
-- Desktop sim needs: `pip install numpy opencv-python-headless`
-
-## License / safety
-
-Experimental. Follow local UAV law, VLOS, insurance. AR is **not** a substitute for attitude awareness. Geofencing remains DJI’s.
-
-## Race box (director + API)
+### Host telemetry mock (no phone)
 
 ```bash
-cd /work/drone-track-overlay
-pip install aiohttp   # if needed
-PYTHONPATH=. python3 race_box/server.py
-# Director UI: http://127.0.0.1:8088/
-# API docs: docs/PHONE_API.md
+PYTHONPATH=. python3 sim/dji_telemetry_mock.py
 ```
 
-## Android app (SIM build)
+Posts ENU telemetry as if an MSDK phone were flying the demo track. Use **either** this **or** the Android SIM app for a given heat—not both.
+
+### Android SIM app
 
 ```bash
-export ANDROID_HOME=/opt/android-sdk
+export ANDROID_HOME=/opt/android-sdk   # or your SDK path
 cd android && ./gradlew :app:assembleDebug
-# APK: android/app/build/outputs/apk/debug/app-debug.apk
-```
-
-Emulator needs **KVM** (`/dev/kvm`). With KVM enabled:
-
-```bash
-export ANDROID_HOME=/opt/android-sdk
-export PATH="$PATH:$ANDROID_HOME/emulator:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin"
-# AVD GateRace_API34 (google_apis x86_64 API 34) — create once:
-# avdmanager create avd -n GateRace_API34 -k "system-images;android-34;google_apis;x86_64" -d pixel_6
-emulator -avd GateRace_API34 -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -accel on &
-adb wait-for-device
-adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb shell am start -n com.gaterace.app/.ui.MainActivity
 ```
 
-Emulator host loopback for race box: `http://10.0.2.2:8088`
+On the **emulator**, the default race box URL is `http://10.0.2.2:8088`. On a **physical phone**, set the laptop’s LAN IP in the app URL field.
 
-### Host DJI telemetry mock (no phone / no aircraft)
+KVM makes the emulator practical. After a clean machine/container: `scripts/setup_android_env.sh`.
 
-Posts race-box `/telemetry` from simulated MSDK-like GPS/attitude → ENU:
+### Desktop overlay sim (optional GUI)
+
+Needs a display and `numpy` + OpenCV:
 
 ```bash
-PYTHONPATH=. python3 sim/dji_telemetry_mock.py           # arms demo_field, flies all gates
-PYTHONPATH=. python3 sim/dji_telemetry_mock.py --once -v  # sample JSON
-PYTHONPATH=. python3 sim/dji_telemetry_mock.py --no-arm   # if already armed by phone
+pip install numpy opencv-python-headless   # or opencv-python with GUI
+PYTHONPATH=. python3 sim/desktop_sim.py
 ```
 
-Use **either** the Android SIM app **or** `dji_telemetry_mock.py` as the telemetry source for one heat (not both at once).
+Controls: W/S speed · A/D yaw · R/F up/down · Q/E camera pitch · Esc quit.
+
+---
+
+## Design notes
+
+- Locked product/architecture choices: [docs/DECISION_V1.md](docs/DECISION_V1.md)
+- Research options considered: [ARCHITECTURE_OPTIONS.md](ARCHITECTURE_OPTIONS.md)
+- Hardware budget sketch: [docs/BOM_V1.md](docs/BOM_V1.md)
+- Clock policy: heat time `t` is **phone-monotonic** within a heat (see API doc)—never mix with browser `performance.now()` or wall clocks for scoring.
+
+Optional field API token: set `GATERACE_TOKEN` on the race box process.
+
+---
+
+## Field roadmap
+
+1. DJI MSDK V5 app key + liveview surface under the gate overlay  
+2. Phone → race box telemetry at 10–20 Hz; local render uses latest pose  
+3. Phone → race box **spectator RTMP** (low bitrate), director HLS to TV  
+4. Clap / LED latency calibration on the pilot path  
+5. Real-world cones as optional hints under virtual gates  
+
+---
+
+## Safety
+
+Experimental software. Follow local UAV regulations, VLOS, and insurance requirements. AR overlays are **not** a substitute for attitude awareness. Aircraft geofencing and failsafes remain DJI’s responsibility.
+
+## License
+
+See [LICENSE](LICENSE).

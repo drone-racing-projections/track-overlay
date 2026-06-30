@@ -1,55 +1,51 @@
-# Bill of materials V1 (budget-oriented serious demo)
+# Bill of materials — V1 demo event
 
-Prices are approximate USD retail; adjust to region.
+Prices are approximate USD retail and vary by region. Confirm DJI MSDK aircraft support on [developer.dji.com](https://developer.dji.com) before purchasing.
 
-## Flight kit (per pilot slot; buy 1 to start, 2 for head-to-head)
+## Flight kit (per pilot slot)
 
-| Item | Notes | Est. |
-|------|--------|------|
-| DJI Mini 4 Pro (Fly More if possible) | MSDK V5 support — **confirm on developer.dji.com before buying** | $800–1100 |
-| RC **without** built-in screen (phone-mounted) | Lets GateRace own the display | often in combo |
-| Flagship Android phone (high refresh, strong GPU) | e.g. recent Pixel / Samsung / OnePlus; reserve for the project | $400–900 |
-| Phone clamp + sun hood | Mandatory outdoors | $30–80 |
-| Extra batteries + charging hub | Event stamina | $150–300 |
-| Prop guards (optional) | Training only; may affect feel | $30 |
-| Landing pad, field kit, fire-safe LiPo bag | Ops | $50–100 |
-
-## Race box / ground (one per event)
+Start with one kit; add a second for head-to-head heats.
 
 | Item | Notes | Est. |
 |------|--------|------|
-| Field laptop or Intel NUC + monitor | Race server + director UI | $600–1500 |
-| Travel router / dedicated AP | Telemetry LAN; do **not** bridge pilot video over Wi‑Fi | $50–150 |
-| Outdoor TV or large monitor (optional) | Spectator leaderboard | $200–500 |
-| Rugged case, power station / inverter | Field power | $200–600 |
-| Survey flags / cones / gate poles | Optional physical hints aligned with virtual gates | $50–150 |
-| GNSS survey phone app or handheld (optional) | Place gates accurately once | $0–300 |
+| DJI Mini 4 Pro (Fly More if possible) | MSDK V5 candidate — **verify support list** | $800–1100 |
+| RC **without** built-in screen | Phone-mounted so GateRace owns the display | often in combo |
+| Flagship Android phone | High refresh, strong GPU; dedicated to the event | $400–900 |
+| Phone clamp + sun hood | Required outdoors | $30–80 |
+| Extra batteries + hub | Event stamina | $150–300 |
+| Landing pad, LiPo bag, basic field tools | Ops | $50–100 |
 
-## Developer / software
+## Race box / ground (one per venue)
 
 | Item | Notes | Est. |
 |------|--------|------|
-| DJI developer account | MSDK app key, signing | Free–low |
-| Google Play internal testing track | Distribute to event phones | Free |
-| Domain + tiny VPS (optional) | Remote leaderboard later | $5–20/mo |
-| This repo | Track core + sim | — |
+| Field laptop or NUC + small monitor | Race server, director UI, ffmpeg spectator relay | $600–1500 |
+| Travel router / dedicated AP | Private SSID for telemetry + RTMP ingest | $50–150 |
+| Outdoor TV or large monitor | Spectator HLS or leaderboard | $200–500 |
+| Power station / inverter, cabling | Field power | $200–600 |
+| Survey flags / cones | Optional physical hints under virtual gates | $50–150 |
 
-## Optional upgrades (loop 2+)
+## Software and accounts
+
+| Item | Notes | Est. |
+|------|--------|------|
+| DJI developer account | MSDK app key for `com.gaterace.app` | Free–low |
+| This repository | Track core, race box, sims | — |
+| Optional stream destinations | Twitch / YouTube RTMP keys for egress | Free–low |
+| Optional domain + VPS | Remote leaderboard later | $5–20/mo |
+
+## Optional later upgrades
 
 | Item | Why |
 |------|-----|
-| Second Mini 4 Pro kit | Multi-pilot |
-| RTK / enterprise airframe | Tighter gates |
-| Open FPV race quad + HDZero | True goggle latency adapter |
-| Dedicated Android tablet as director | |
+| Second race box / hot spare | Resilience |
+| Capture card + OBS | Fallback spectator if phone RTMP is unavailable |
+| RTK / better survey | Tighter gate placement |
+| Open FPV companion path | Lower latency experiments beyond screen-FPV |
 
-## Ballpark total to “roll” one fun seat
+## What not to buy for V1 pilot AR
 
-**≈ $2.0k–3.5k** for one solid pilot kit + race box without luxury power/TV.  
-**≈ $4k–6k** comfortable event-ready with spares and spectator screen.
+- Gear that only works if you can inject overlays into **DJI Goggles** (not supported for our overlay)  
+- Betting the **pilot** path on multi-second cloud livestream platforms  
 
-## Anti-patterns (don’t spend here for v1)
-
-- Trying to inject AR into DJI Goggles  
-- Pilot video over RTMP/Wi‑Fi to a laptop and back  
-- Tiny virtual gates requiring survey-grade GNSS on day one  
+Minimum serious roll-out budget is typically on the order of **$2k–3.5k** for one pilot kit plus ground station.

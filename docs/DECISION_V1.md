@@ -1,54 +1,80 @@
-# Decision V1 — Latency-first AR gate racing (DJI + ground race box)
+# Decision record — V1 latency-first AR gate racing
 
 **Date:** 2026-06-30  
-**Priority order:** (1) pilot visual latency / fun (2) come-and-fly ops (3) commercial DJI airframe (4) accuracy good enough for large outdoor gates
+**Status:** Accepted for implementation in this repository  
 
-## Locked choices
+**Priority order**
 
-| Decision | Choice | Why |
-|----------|--------|-----|
-| Pilot primary view | **Custom Android app (MSDK V5)** on phone mounted to RC (prefer RC *without* built-in screen so *our* app owns the pixels) | Only practical way to put **world-locked rings in the pilot’s eyes** on a **stock DJI** without reverse-engineering goggles. Avoid RTMP/spectator paths for piloting. |
-| Authoritative timing | **Ground race box** (field laptop / NUC) | Fair multi-pilot clock, logs, leaderboards; air/app only sends telemetry + soft cues. |
-| Gate scale (v1) | **Large outdoor rings** (≈8–15 m diameter, generous thickness) | Consumer GNSS is meters-level; large gates keep passes fun and forgiving while pose is imperfect. |
-| Aircraft (v1 target) | **DJI Mini 4 Pro** (MSDK V5 supported) + RC that uses a phone | Best price/stability/gimbal vs enterprise; verify current MSDK support list at purchase. Alternate: Mini 3 Pro. |
-| Render location | **On the phone in the MSDK app** (GPU, minimal copies) | Adding a ground video hop for the *pilot* adds latency — forbidden for pilot path. Ground PC may render **spectator** views only (delay OK). |
-| Not in v1 pilot path | Stock Fly app, RTMP livestream, goggles-only AR | Fly is closed; RTMP is multi-second; DJI goggles can’t inject our 3D overlay. |
-| Later adapter | Open FPV / companion composite | If we outgrow screen-FPV latency, add without rewriting race core. |
+1. Pilot visual latency (experience must feel good)  
+2. Come-and-fly ground operations  
+3. Commercial DJI airframe where practical  
+4. Accuracy “good enough” for large outdoor gates  
+
+---
+
+## Decisions
+
+| Topic | Choice | Rationale |
+|-------|--------|-----------|
+| Pilot primary view | Custom **Android app (MSDK V5)** on a phone mounted to the RC (prefer RC *without* a built-in screen so GateRace owns the pixels) | Only practical way to draw **world-locked** rings in the pilot’s eyes on stock DJI without reverse-engineering goggles. |
+| Authoritative timing | **Race box** on a field laptop / NUC | Shared clock, logs, leaderboards; phone sends telemetry and soft cues only. |
+| Gate scale (v1) | **Large outdoor rings** (~8–15 m diameter, generous thickness) | Consumer GNSS is metres-level; large apertures stay fun when pose is imperfect. |
+| Aircraft (v1 target) | **DJI Mini 4 Pro** (confirm current MSDK support) + phone-centric RC | Cost / stability / gimbal balance; Mini 3 Pro as alternate. |
+| Where AR is rendered | **On the phone**, on top of MSDK liveview | Any ground hop for *pilot* video adds latency and is rejected for v1 piloting. |
+| Spectator video | **Optional delayed path via race box** (RTMP ingest → HLS / egress RTMP) | TV and internet audiences are fine with seconds of delay; must not share the pilot pipeline. |
+| Out of scope for pilot path | Stock Fly app, RTMP-only piloting, goggles-only AR | Fly is closed; RTMP latency is too high for piloting; goggles cannot host our overlay. |
+| Later extension | Open FPV / companion compositor | Can be added without rewriting the race engine. |
+
+---
 
 ## Latency doctrine
 
-1. **Pilot pixels never leave the phone** after DJI delivers the liveview (decode → project gates → present). No re-encode, no Wi‑Fi to laptop for piloting.
-2. Budget overlay pass **&lt; 1 frame @ 30–60 Hz** (aim &lt; 16 ms render). Profile everything.
-3. Pose for drawing is **latest telemetry interpolated/extrapolated to “now”**; official passes use **ground-received pose history** with timestamps.
-4. Accept imperfect gate registration in loop 1; optimize **feel** (stable rings, clear next gate, loud pass feedback).
+1. After DJI delivers liveview frames on the phone, pilot pixels **stay on the phone** (decode → project gates → present). No re-encode and no Wi‑Fi hop for piloting.  
+2. Overlay work should fit in **under one frame** at 30–60 Hz (budget on the order of 16 ms). Profile early.  
+3. Drawing uses the **latest pose**, optionally extrapolated to “now.” Official passes use **ground-received** pose history with phone-monotonic timestamps.  
+4. Accept imperfect registration in loop one; optimise **feel** (stable rings, clear next gate, strong pass feedback).
 
-## Come-and-fly ground setup (spend money here)
+---
 
-Pilots bring skill; **we** provide:
+## Clock doctrine
 
-- Race box (NUC/laptop) + Wi‑Fi AP (private SSID for telemetry/API only — not pilot video)
-- Phone preloaded with **GateRace** app + DJI MSDK keys (dev account)
-- Mini 4 Pro (+ spares batteries) + RC + phone clamp + sun shade
-- Printed / app track map; large **physical cones or flags** optional as real-world hints (virtual gates still authoritative)
-- Safety: visual observer, geo awareness, insurance as required locally
+- Telemetry field `t` is **phone-monotonic seconds within a heat** (often starting near zero after Arm).  
+- Soft start and splits use **only** that domain.  
+- Do not mix Unix wall time or browser `performance.now()` into scoring.  
+- The race box may expose wall time for logs (`t_server_wall`) without using it for elapsed race time.
 
-Pilot flow: buckle phone → open GateRace → connect aircraft → arm heat on race box → fly rings → land → see time on box + phone.
+---
+
+## Come-and-fly ground setup
+
+Pilots bring skill; organisers provide:
+
+- Race box (laptop/NUC) + private Wi‑Fi AP for telemetry and spectator ingest  
+- Phones preloaded with GateRace + MSDK keys  
+- Mini 4 Pro fleet, RC, clamps, sun shades, batteries  
+- Track map; optional physical cones/flags aligned with virtual gates  
+- Safety: observer, local rules, insurance as required  
+
+Pilot flow: mount phone → open GateRace → connect aircraft → arm heat on race box → fly rings → land → see time on phone and director UI.
+
+---
 
 ## System diagram
 
 ```
-[ Mini 4 Pro ] --OcuSync--> [ RC + Android phone: GateRace app ]
-                                | liveview (low latency path)
-                                | draws AR gates locally
+[ Mini 4 Pro ] --OcuSync--> [ RC + Android: GateRace ]
+                                | liveview + AR (pilot)
                                 |
-                                +-- Wi‑Fi telemetry/events --> [ Race box: authoritative timing ]
-                                                                  |
-                                                                  +--> spectator RTMP (delayed OK)
-                                                                  +--> leaderboard display
+                                +-- telemetry/events --> [ Race box ]
+                                |                           +-- director / leaderboard
+                                +-- optional RTMP ---------+-- HLS to TV / LAN
+                                                            +-- optional internet RTMP
 ```
 
-## Fun over perfection (v1 acceptance)
+---
 
-- Rings may jitter ±1–2 m at distance — OK if still “raceable”
-- False pass rate low enough for casual heats; protests rare
-- Single pilot timed runs before multi-drone RF management
+## V1 acceptance (fun over perfection)
+
+- Rings may jitter on the order of 1–2 m at distance if the course still feels raceable.  
+- False passes rare enough for casual heats.  
+- Single-pilot timed runs before multi-aircraft RF management.
