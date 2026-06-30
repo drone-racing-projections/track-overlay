@@ -1,0 +1,63 @@
+{
+  "name": "Demo Field Sprint",
+  "description": "Large outdoor gates for GNSS-tolerant fun racing (ENU meters from origin).",
+  "origin": {
+    "lat_deg": 37.4419,
+    "lon_deg": -122.1430,
+    "alt_m": 30.0
+  },
+  "gates": [
+    {
+      "id": "g1",
+      "name": "Start",
+      "e": 0,
+      "n": 50,
+      "u": 8,
+      "normal_e": 0,
+      "normal_n": 1,
+      "normal_u": 0,
+      "radius_m": 12,
+      "thickness_m": 4,
+      "sequence": 1
+    },
+    {
+      "id": "g2",
+      "name": "Turn",
+      "e": 40,
+      "n": 100,
+      "u": 10,
+      "normal_e": 0.7,
+      "normal_n": 0.7,
+      "normal_u": 0,
+      "radius_m": 12,
+      "thickness_m": 4,
+      "sequence": 2
+    },
+    {
+      "id": "g3",
+      "name": "High",
+      "e": 80,
+      "n": 60,
+      "u": 18,
+      "normal_e": 1,
+      "normal_n": 0,
+      "normal_u": 0,
+      "radius_m": 14,
+      "thickness_m": 4,
+      "sequence": 3
+    },
+    {
+      "id": "g4",
+      "name": "Finish",
+      "e": 20,
+      "n": 20,
+      "u": 8,
+      "normal_e": 0,
+      "normal_n": -1,
+      "normal_u": 0,
+      "radius_m": 12,
+      "thickness_m": 4,
+      "sequence": 4
+    }
+  ]
+}

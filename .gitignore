@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+*.egg
+
+# Android
+android/.gradle/
+android/local.properties
+android/**/build/
+android/captures/
+android/.cxx/
+*.apk
+*.ap_
+*.dex
+*.class
+*.iml
+.idea/
+
+# Race box runtime
+race_box/logs/
+*.jsonl
+
+# OS / editor
+.DS_Store
+*.swp
+*~
+.vscode/
+
+# Local secrets
+**/google-services.json
+**/dji_api_key*
