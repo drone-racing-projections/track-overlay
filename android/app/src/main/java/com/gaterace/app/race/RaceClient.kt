@@ -62,10 +62,23 @@ class RaceClient(
     fun baseUrl(): String = baseUrl
 
     private fun wsUrl(): String {
+        // OkHttp HttpUrl only allows http(s) schemes — build ws URL as a string
         val http = baseUrl.toHttpUrlOrNull()
-            ?: return baseUrl.replaceFirst(Regex("^http"), "ws") + "/ws"
-        val scheme = if (http.isHttps) "wss" else "ws"
-        return http.newBuilder().scheme(scheme).encodedPath("/ws").query(null).fragment(null).build().toString()
+        if (http != null) {
+            val scheme = if (http.isHttps) "wss" else "ws"
+            val port = when {
+                http.isHttps && http.port == 443 -> ""
+                !http.isHttps && http.port == 80 -> ""
+                else -> ":${http.port}"
+            }
+            return "$scheme://${http.host}$port/ws"
+        }
+        val trimmed = baseUrl.trimEnd('/')
+        return when {
+            trimmed.startsWith("https://") -> "wss://" + trimmed.removePrefix("https://") + "/ws"
+            trimmed.startsWith("http://") -> "ws://" + trimmed.removePrefix("http://") + "/ws"
+            else -> "ws://$trimmed/ws"
+        }
     }
 
     fun reconnect() {
@@ -190,7 +203,7 @@ class RaceClient(
     }
 
     fun sendTelemetry(pose: Pose) {
-        if (latest.get().finished) return // don't spam finished heats
+        // Always attempt; server returns 409 when finished / ownership mismatch (surfaces via onError)
         scope.launch(Dispatchers.IO) {
             try {
                 val o = JSONObject()

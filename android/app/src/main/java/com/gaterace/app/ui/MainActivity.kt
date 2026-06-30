@@ -122,7 +122,7 @@ class MainActivity : AppCompatActivity() {
                 flight.tick(dt, session.nextGateId)
                 val pose = flight.current()
                 overlay.setPose(pose, session.nextGateId)
-                if (!session.finished && now - lastTelemetryUptime > 80) {
+                if (now - lastTelemetryUptime > 80) {
                     lastTelemetryUptime = now
                     race.sendTelemetry(pose)
                 }

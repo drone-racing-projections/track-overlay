@@ -112,7 +112,8 @@ Controls: W/S speed · A/D yaw · R/F up/down · Q/E camera pitch · Esc quit.
 
 - Locked product/architecture choices: [docs/DECISION_V1.md](docs/DECISION_V1.md)
 - Research options considered: [ARCHITECTURE_OPTIONS.md](ARCHITECTURE_OPTIONS.md)
-- Hardware budget sketch: [docs/BOM_V1.md](docs/BOM_V1.md)
+- Hardware budget (user vs developer, mandatory vs nice-to-have): [docs/BOM_V1.md](docs/BOM_V1.md)
+- Intensity & min/recommended specs: [docs/SPECS.md](docs/SPECS.md)
 - Clock policy: heat time `t` is **phone-monotonic** within a heat (see API doc)—never mix with browser `performance.now()` or wall clocks for scoring.
 
 Optional field API token: set `GATERACE_TOKEN` on the race box process.
