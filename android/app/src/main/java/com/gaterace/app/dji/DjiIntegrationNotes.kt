@@ -13,8 +13,7 @@ package com.gaterace.app.dji
  *
  * Spike order: telemetry-only app → overlay on black → overlay on liveview → latency clap test.
  *
- * Spectator (optional, delayed): publish a secondary RTMP copy to
- * rtmp://<race-box-lan-ip>:1935/live/pilot — see docs/SPECTATOR.md.
+ * Spectator (optional, delayed): RTMP to race box — docs/SPECTATOR.md.
  * Never use that stream as the pilot display.
  */
 object DjiIntegrationNotes
